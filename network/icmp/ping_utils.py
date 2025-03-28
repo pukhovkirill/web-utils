@@ -1,4 +1,5 @@
 import socket
+import struct
 
 
 def to_ip(addr: str) -> str:
@@ -41,21 +42,16 @@ def calculate_checksum(data: bytes) -> int:
     Returns:
         int: Computed checksum.
     """
-    sum = 0
-    length = len(data)
-    i = 0
+    checksum = 0
+    for i in range(0, len(data), 2):
+        checksum += (data[i] << 8) + (
+            struct.unpack('B', data[i + 1:i + 2])[0]
+            if len(data[i + 1:i + 2]) else 0
+        )
 
-    while length > 1:
-        sum += (data[i] << 8) + data[i + 1]
-        i += 2
-        length -= 2
-
-    if length == 1:
-        sum += data[i] << 8
-
-    sum = (sum >> 16) + (sum & 0xFFFF)
-    sum += sum >> 16
-    return ~sum & 0xFFFF
+    checksum = (checksum >> 16) + (checksum & 0xFFFF)
+    checksum = ~checksum & 0xFFFF
+    return checksum
 
 
 def calculate_rtt(responses: list) -> float:
