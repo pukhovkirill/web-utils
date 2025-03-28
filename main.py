@@ -2,7 +2,7 @@ from network import Ping
 
 host = "google.com"
 
-p = Ping(host, 64, 50)
+p = Ping(host, 64, 1)
 
 response = p.start(10)
 
