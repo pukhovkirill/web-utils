@@ -5,12 +5,12 @@ from . import icmp_utils as utils
 
 
 class IcmpProto:
-    """Class for represents ICMP proto."""
+    """Class for performing ICMP echo requests."""
 
     def __init__(self, destination: str, packet_size: int, timeout: int):
-        self._destination = destination
-        self._packet_size = packet_size
-        self._timeout = timeout
+        self._destination: str = destination
+        self._packet_size: int = packet_size
+        self._timeout: int = timeout
 
     def _create_packet(self, sequence: int) -> bytes:
         """Creates an ICMP echo request packet.

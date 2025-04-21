@@ -1,5 +1,6 @@
 from network.icmp import Traceroute
 from network.icmp import Ping
+from network.dns import DnsLookup
 
 host = "google.com"
 
@@ -21,3 +22,12 @@ response = t.start()
 
 for hop in response:
     print(hop)
+
+host = "yandex.ru"
+
+d = DnsLookup(host)
+
+response = d.start()
+
+for addr in response.addresses:
+    print(addr)

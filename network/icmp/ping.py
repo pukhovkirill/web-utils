@@ -10,22 +10,22 @@ class PingResponse(object):
     """Holds the full ping result."""
 
     def __init__(self):
-        self.destination = None
+        self.destination: str = "*"
 
-        self.transmitted_package_count = None
-        self.received_package_count = None
+        self.transmitted_package_count: int = 0
+        self.received_package_count: int = 0
 
-        self.packet_size = None
-        self.packet_loss_rate = None
+        self.packet_size: int = 0
+        self.packet_loss_rate: float = 0
 
-        self.time = None
-        self.rtt_min = None
-        self.rtt_max = None
-        self.rtt_avg = None
+        self.time: float = 0.0
+        self.rtt_min: float = 0.0
+        self.rtt_max: float = 0.0
+        self.rtt_avg: float = 0.0
 
 
 class Ping(IcmpProto):
-    """Class for performing ICMP echo requests."""
+    """Class for performing a ping to a destination."""
 
     def __init__(self, destination: str, packet_size: int, timeout: int):
         """Initialize ping parameters.

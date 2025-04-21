@@ -21,8 +21,8 @@ def mock_socket():
 
 @pytest.fixture
 def ping_instance():
-    with patch("network.icmp.ping_utils.to_ip", side_effect=mock_to_ip), \
-            patch("network.icmp.ping_utils.calculate_checksum", side_effect=mock_calculate_checksum):
+    with patch("network.icmp.icmp_utils.to_ip", side_effect=mock_to_ip), \
+            patch("network.icmp.icmp_utils.calculate_checksum", side_effect=mock_calculate_checksum):
         return Ping(destination="8.8.8.8", packet_size=64, timeout=1)
 
 
