@@ -57,7 +57,7 @@ class Ping(IcmpProto):
             destination_ip = utils.to_ip(self._destination)
             print(f"Ping {self._destination} [{destination_ip}] with {self._packet_size}-byte packets")
 
-            with socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP) as sock:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_ICMP) as sock:
                 t = struct.pack(str("ll"), int(self._timeout), int(0))
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, t)
                 start_time = time.time()
