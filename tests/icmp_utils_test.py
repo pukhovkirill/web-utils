@@ -1,5 +1,5 @@
 import pytest
-from network.icmp import ping_utils as utils
+from network.icmp import icmp_utils as utils
 from unittest.mock import patch
 
 

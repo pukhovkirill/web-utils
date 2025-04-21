@@ -4,7 +4,7 @@ import struct
 import time
 
 from .response import Response
-from . import ping_utils as utils
+from . import icmp_utils as utils
 
 
 class Ping:
