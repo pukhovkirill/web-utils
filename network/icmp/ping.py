@@ -1,13 +1,30 @@
-import os
 import socket
 import struct
 import time
 
-from .response import Response
 from . import icmp_utils as utils
+from .icmp_proto import IcmpProto
 
 
-class Ping:
+class PingResponse(object):
+    """Holds the full ping result."""
+
+    def __init__(self):
+        self.destination = None
+
+        self.transmitted_package_count = None
+        self.received_package_count = None
+
+        self.packet_size = None
+        self.packet_loss_rate = None
+
+        self.time = None
+        self.rtt_min = None
+        self.rtt_max = None
+        self.rtt_avg = None
+
+
+class Ping(IcmpProto):
     """Class for performing ICMP echo requests."""
 
     def __init__(self, destination: str, packet_size: int, timeout: int):
@@ -18,15 +35,12 @@ class Ping:
             packet_size (int): Packet size in bytes.
             timeout (int): Response timeout (in seconds).
         """
-        self._response = Response()
-        self._response.destination = destination
-        self._response.packet_size = packet_size
+        super().__init__(destination, packet_size, timeout)
+        self.__response = PingResponse()
+        self.__response.destination = destination
+        self.__response.packet_size = packet_size
 
-        self._destination = destination
-        self._packet_size = packet_size
-        self._timeout = timeout
-
-    def start(self, packet_count: int = 5) -> Response:
+    def start(self, packet_count: int = 5) -> PingResponse:
         """Start the ping process.
 
         Args:
@@ -35,15 +49,15 @@ class Ping:
         Returns:
             Response: A response object containing ping statistics.
         """
-        self._response.transmitted_package_count = packet_count
-        self._response.received_package_count = 0
+        self.__response.transmitted_package_count = packet_count
+        self.__response.received_package_count = 0
         rtt_values = []
 
         try:
             destination_ip = utils.to_ip(self._destination)
             print(f"Ping {self._destination} [{destination_ip}] with {self._packet_size}-byte packets")
 
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_ICMP) as sock:
+            with socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP) as sock:
                 t = struct.pack(str("ll"), int(self._timeout), int(0))
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, t)
                 start_time = time.time()
@@ -59,45 +73,25 @@ class Ping:
                         rtt = (recv_time - send_time) * 1000
                         rtt_values.append(rtt)
 
-                        self._response.received_package_count += 1
+                        self.__response.received_package_count += 1
                         print(f"Reply from {destination_ip}: seq={seq} time={rtt:.2f} ms")
                     except socket.timeout:
                         print(f"Packet {seq} lost.")
                     time.sleep(1)
-                self._response.time = (time.time() - start_time) * 10000
+                self.__response.time = (time.time() - start_time) * 10000
         except Exception as e:
             print(f"Error: {e}")
 
-        self._response.packet_loss_rate = (
-            (1 - self._response.received_package_count / packet_count) * 100
+        self.__response.packet_loss_rate = (
+            (1 - self.__response.received_package_count / packet_count) * 100
             if packet_count > 0 else 100
         )
 
         if rtt_values:
-            self._response.rtt_min = min(rtt_values)
-            self._response.rtt_max = max(rtt_values)
-            self._response.rtt_avg = sum(rtt_values) / len(rtt_values)
+            self.__response.rtt_min = min(rtt_values)
+            self.__response.rtt_max = max(rtt_values)
+            self.__response.rtt_avg = sum(rtt_values) / len(rtt_values)
         else:
-            self._response.rtt_min = self._response.rtt_max = self._response.rtt_avg = None
+            self.__response.rtt_min = self.__response.rtt_max = self.__response.rtt_avg = None
 
-        return self._response
-
-    def _create_packet(self, sequence: int) -> bytes:
-        """Creates an ICMP echo request packet.
-
-        Args:
-            sequence (int): Packet sequence number.
-
-        Returns:
-            bytes: Constructed ICMP packet.
-        """
-        # set icmp_type -> 8 for ICMP Echo Request
-        icmp_type = 8
-        icmp_code = 0
-        checksum = 0
-        identifier = os.getpid() & 0xFFFF
-        payload = bytes(self._packet_size)
-        header = struct.pack("!BBHHH", icmp_type, icmp_code, checksum, identifier, sequence) + payload
-        checksum = utils.calculate_checksum(header)
-        header = struct.pack("!BBHHH", icmp_type, icmp_code, checksum, identifier, sequence)
-        return header + payload
+        return self.__response

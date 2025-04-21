@@ -2,7 +2,7 @@ import socket
 import struct
 import pytest
 from unittest.mock import patch, MagicMock
-from network import Ping, Response
+from network.icmp import Ping, PingResponse
 
 
 def mock_to_ip():
@@ -54,7 +54,7 @@ def test_ping_start_success(ping_instance):
         response = ping_instance.start(packet_count=packet_count)
 
         # Assert
-        assert isinstance(response, Response)
+        assert isinstance(response, PingResponse)
         assert response.transmitted_package_count == packet_count
         assert response.received_package_count == packet_count
 
@@ -65,7 +65,7 @@ def test_ping_packet_loss(ping_instance):
     with patch("socket.socket.recvfrom", side_effect=socket.timeout("Timeout occurred")), patch("time.sleep"):
         response = ping_instance.start(packet_count=packet_count)
 
-        assert isinstance(response, Response)
+        assert isinstance(response, PingResponse)
         assert response.transmitted_package_count == packet_count
         assert response.received_package_count == 0
         assert response.packet_loss_rate == 100

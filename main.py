@@ -1,4 +1,5 @@
-from network import Ping
+from network.icmp import Traceroute
+from network.icmp import Ping
 
 host = "google.com"
 
@@ -11,3 +12,12 @@ print(f'{response.transmitted_package_count} packets transmitted, '
       f'{response.packet_loss_rate:.0f}% packet loss, '
       f'time {response.time:.0f}ms')
 print(f'rtt min/avg/max = {response.rtt_min:.3f}/{response.rtt_avg:.3f}/{response.rtt_max:.3f} ms')
+
+host = "google.com"
+
+t = Traceroute(host, 64, 1)
+
+response = t.start()
+
+for hop in response:
+    print(hop)
