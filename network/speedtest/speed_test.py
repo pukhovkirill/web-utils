@@ -21,8 +21,10 @@ class Speedtest:
         self,
         user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     ) -> None:
-        """
-        :param user_agent: User-Agent string for HTTP requests.
+        """Initialize speedtest parameters.
+
+        Args:
+            user_agent: User-Agent string for HTTP requests.
         """
         self.user_agent = user_agent
 
@@ -41,6 +43,9 @@ class Speedtest:
         """
         Measure download speed by fetching data from the given URL in chunks.
         Adds a User-Agent header to avoid 403 errors.
+        Args:
+            url: Request path on the server (e.g., "https://example.com/100mb.test").
+            chunk_size: Size in bytes of each upload payload.
         Returns:
             Speed in bits per second (bps).
         """
