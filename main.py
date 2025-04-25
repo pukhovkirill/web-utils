@@ -1,6 +1,7 @@
 from network.icmp import Traceroute
 from network.icmp import Ping
 from network.dns import DnsLookup
+from network.speedtest import Speedtest
 
 host = "google.com"
 
@@ -31,3 +32,16 @@ response = d.start()
 
 for addr in response.addresses:
     print(addr)
+
+st = Speedtest()
+
+# ----- Download Test -----
+download_url = "http://cachefly.cachefly.net/100mb.test"
+down_speed = st.test_download(download_url)
+print("Download speed:", st.format_speed(down_speed))
+
+# ----- Upload Test -----
+upload_host = "filebin.net"
+upload_path = "/pytest/file"
+up_speed = st.test_upload(upload_host, upload_path, duration=10)
+print("Upload speed:", st.format_speed(up_speed))
