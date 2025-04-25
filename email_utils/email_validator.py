@@ -28,6 +28,8 @@ class EmailValidator:
         """
         Initialize with an email_utils address.
         Leading/trailing whitespace is stripped.
+        Args:
+            email (str): The email address to validate.
         """
         self.email: str = email.strip()
 
