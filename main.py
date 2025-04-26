@@ -2,6 +2,7 @@ from network.icmp import Traceroute
 from network.icmp import Ping
 from network.dns import DnsLookup
 from network.speedtest import Speedtest
+from qr import QRCodeGenerator
 
 host = "google.com"
 
@@ -45,3 +46,8 @@ upload_host = "filebin.net"
 upload_path = "/pytest/file"
 up_speed = st.test_upload(upload_host, upload_path, duration=10)
 print("Upload speed:", st.format_speed(up_speed))
+
+
+qr = QRCodeGenerator()
+text = "https://colab.research.google.com/drive/1uKW6XjIJcdn4w-DWNT2Fck8TalxhN7fx?usp=sharing"
+qr.generate(text, "out.png")
