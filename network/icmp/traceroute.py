@@ -102,6 +102,7 @@ class Traceroute(IcmpProto):
     def start(self, max_hops: int = 30, base_port: int = 33434) -> TracerouteResponse:
         """Start the traceroute process using UDP packets.
            Root priviledges required.
+
         Args:
             max_hops (int, optional): Maximum number of hops to trace.
             base_port (int, optional): Base destination port for UDP probes.

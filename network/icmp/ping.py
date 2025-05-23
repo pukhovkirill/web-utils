@@ -42,6 +42,7 @@ class Ping(IcmpProto):
 
     def start(self, packet_count: int = 5) -> PingResponse:
         """Start the ping process.
+           Root priviledges required.
 
         Args:
             packet_count (int, optional): Number of packets to send. Default is 5.
