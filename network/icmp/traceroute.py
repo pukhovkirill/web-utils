@@ -55,32 +55,32 @@ class TracerouteResponse:
 
     def __init__(self):
         self.destination = None
-        self.__hops: list[TracerouteHop] = []
-        self.__index = 0
+        self._hops: list[TracerouteHop] = []
+        self._index = 0
 
     def add_hop(self, hop: TracerouteHop):
-        self.__hops.append(hop)
+        self._hops.append(hop)
 
     def __iter__(self):
-        self.__index = 0
+        self._index = 0
         return self
 
     def __next__(self) -> TracerouteHop:
-        if self.__index < len(self.__hops):
-            hop = self.__hops[self.__index]
-            self.__index += 1
+        if self._index < len(self._hops):
+            hop = self._hops[self._index]
+            self._index += 1
             return hop
         raise StopIteration
 
     def __len__(self):
-        return len(self.__hops)
+        return len(self._hops)
 
     def __getitem__(self, index: int) -> TracerouteHop:
-        return self.__hops[index]
+        return self._hops[index]
 
     def __str__(self):
-        lines = [f"Traceroute to {self.destination}, {len(self.__hops)} hops:"]
-        lines.extend(str(hop) for hop in self.__hops)
+        lines = [f"Traceroute to {self.destination}, {len(self._hops)} hops:"]
+        lines.extend(str(hop) for hop in self._hops)
         return "\n".join(lines)
 
 

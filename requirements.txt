@@ -1,4 +1,11 @@
+bitarray==3.3.1
+dnspython==2.7.0
+idna==3.10
+iniconfig==2.1.0
+numpy==2.2.5
+opencv-python==4.11.0.86
+packaging==24.2
+pillow==11.2.1
+pluggy==1.5.0
 pytest==8.3.5
-numpy
-Pillow
-bitarray
+pytest-socket==0.7.0

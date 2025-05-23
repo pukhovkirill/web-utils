@@ -36,9 +36,9 @@ class Ping(IcmpProto):
             timeout (int): Response timeout (in seconds).
         """
         super().__init__(destination, packet_size, timeout)
-        self.__response = PingResponse()
-        self.__response.destination = destination
-        self.__response.packet_size = packet_size
+        self._response = PingResponse()
+        self._response.destination = destination
+        self._response.packet_size = packet_size
 
     def start(self, packet_count: int = 5) -> PingResponse:
         """Start the ping process.
@@ -49,8 +49,8 @@ class Ping(IcmpProto):
         Returns:
             Response: A response object containing ping statistics.
         """
-        self.__response.transmitted_package_count = packet_count
-        self.__response.received_package_count = 0
+        self._response.transmitted_package_count = packet_count
+        self._response.received_package_count = 0
         rtt_values = []
 
         try:
@@ -73,25 +73,25 @@ class Ping(IcmpProto):
                         rtt = (recv_time - send_time) * 1000
                         rtt_values.append(rtt)
 
-                        self.__response.received_package_count += 1
+                        self._response.received_package_count += 1
                         print(f"Reply from {destination_ip}: seq={seq} time={rtt:.2f} ms")
                     except socket.timeout:
                         print(f"Packet {seq} lost.")
                     time.sleep(1)
-                self.__response.time = (time.time() - start_time) * 10000
+                self._response.time = (time.time() - start_time) * 10000
         except Exception as e:
             print(f"Error: {e}")
 
-        self.__response.packet_loss_rate = (
-            (1 - self.__response.received_package_count / packet_count) * 100
+        self._response.packet_loss_rate = (
+            (1 - self._response.received_package_count / packet_count) * 100
             if packet_count > 0 else 100
         )
 
         if rtt_values:
-            self.__response.rtt_min = min(rtt_values)
-            self.__response.rtt_max = max(rtt_values)
-            self.__response.rtt_avg = sum(rtt_values) / len(rtt_values)
+            self._response.rtt_min = min(rtt_values)
+            self._response.rtt_max = max(rtt_values)
+            self._response.rtt_avg = sum(rtt_values) / len(rtt_values)
         else:
-            self.__response.rtt_min = self.__response.rtt_max = self.__response.rtt_avg = None
+            self._response.rtt_min = self._response.rtt_max = self._response.rtt_avg = None
 
-        return self.__response
+        return self._response
