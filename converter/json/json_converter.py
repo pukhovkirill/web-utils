@@ -1,65 +1,96 @@
+import json
 import re
 from collections import deque
-from typing import List
-from converter.ast import AST
+from typing import List, Optional, Tuple
+
+from converter.ast import AST, ASTNode
 from converter.converter import Converter
 
 
 class JsonConverter(Converter):
+    """
+    Converter for JSON with pretty-printing, tokenization, AST stripping,
+    rebuilding, and unbuilding.
+    """
+
+    NUMERIC_PATTERN = re.compile(
+        r'-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?'
+    )
+
+    def prettify(self, text: str, indent: int = 4) -> str:
+        """
+        Return a pretty-printed JSON string with the given indent.
+
+        If `text` is already a Python dict or list, it is used directly.
+        Otherwise, it is parsed from a JSON string first.
+        """
+        obj = text if isinstance(text, (dict, list)) else json.loads(text)
+        return json.dumps(obj, indent=indent)
 
     def _strip_text(self, string: str) -> List[str]:
-        token_pattern = re.compile(r'''
-            "(?:\\.|[^"\\])*"     |  # строки
-            -?\d+(?:\.\d+)?       |  # числа
-            true|false|null       |  # литералы
-            [{}\[\]:,]               # спец. символы
-        ''', re.VERBOSE)
+        """
+        Tokenize a JSON string into tokens: strings, numbers (with exponent),
+        booleans, nulls, braces, brackets, colons, and commas.
+        """
+        token_pattern = re.compile(
+            r'''
+            "(?:\\.|[^"\\])*"         |  # double-quoted strings
+            -?\d+(?:\.\d+)?           # integers and decimals
+            (?:[eE][+-]?\d+)?         |  # optional exponent
+            true|false|null           |  # boolean literals and null
+            [{}\[\]:,]                   # special JSON characters
+            ''',
+            re.VERBOSE
+        )
         return token_pattern.findall(string)
 
     def _strip_ast(self, tree: AST) -> List[str]:
+        """
+        Traverse an AST and convert it into a flat list of JSON tokens.
+        """
         tokens: List[str] = []
-        task = tuple
+        queue: deque[Tuple[str, Optional[ASTNode]]] = deque()
+        queue.append(('enter', tree.root.children[0]))
 
-        q: deque[task] = deque()
-        q.append(("enter", tree.root.children[0], None))
+        while queue:
+            action, node = queue.pop()
 
-        while q:
-            action, node, extra = q.pop()
-
-            if action == "comma":
+            if action == 'comma':
                 tokens.append(',')
                 continue
 
-            tag = node.tag
-            key = node.attributes.get('key')
+            tag = node.tag if node else ''
+            key = node.attributes.get('key') if node else None
 
-            if action == "exit":
+            if action == 'exit':
                 tokens.append('}' if tag == 'object' else ']')
                 continue
 
-            if key:
-                tokens.append(f'"{key}"')
-                tokens.append(':')
+            if key and key != 'item':
+                tokens.extend([f'"{key}"', ':'])
 
             if tag == 'objects':
-                for child in reversed(node.children):
-                    q.append(("enter", child, None))
-
-            if tag == 'object':
                 tokens.append('{')
-                q.append(("exit", node, None))
+                queue.append(('exit', ASTNode('object')))
+                for child in reversed(node.children):
+                    queue.append(('enter', child))
+
+            elif tag == 'object':
+                if node.attributes:
+                    tokens.append('{')
+                    queue.append(('exit', node))
                 for i, child in enumerate(reversed(node.children)):
-                    if i > 0:
-                        q.append(("comma", None, None))
-                    q.append(("enter", child, None))
+                    if i:
+                        queue.append(('comma', None))
+                    queue.append(('enter', child))
 
             elif tag == 'array':
                 tokens.append('[')
-                q.append(("exit", node, None))
+                queue.append(('exit', node))
                 for i, child in enumerate(reversed(node.children)):
-                    if i > 0:
-                        q.append(("comma", None, None))
-                    q.append(("enter", child, None))
+                    if i:
+                        queue.append(('comma', None))
+                    queue.append(('enter', child))
 
             elif tag == 'string':
                 tokens.append(f'"{node.text}"')
@@ -70,11 +101,13 @@ class JsonConverter(Converter):
         return tokens
 
     def _build(self, expressions: List[str]) -> AST:
-        # preamble
+        """
+        Build an AST from a list of JSON tokens.
+        """
         self.ast = AST()
         self.ast.add('objects', text='ast_array')
-        stack = [self.ast.root.children[-1]]
-        current_key = None
+        stack: List[ASTNode] = [self.ast.root.children[0]]
+        current_key: Optional[str] = None
         expect_key = False
 
         for token in expressions:
@@ -82,7 +115,7 @@ class JsonConverter(Converter):
 
             if token == '{':
                 node = self.ast.add('object', parent=stack[-1])
-                if current_key:
+                if current_key is not None:
                     node.attributes['key'] = current_key
                     current_key = None
                 stack.append(node)
@@ -94,13 +127,15 @@ class JsonConverter(Converter):
 
             elif token == '[':
                 node = self.ast.add('array', parent=stack[-1])
-                if current_key:
+                if current_key is not None:
                     node.attributes['key'] = current_key
                     current_key = None
                 stack.append(node)
+                expect_key = False
 
             elif token == ']':
                 stack.pop()
+                expect_key = False
 
             elif token == ',':
                 if stack[-1].tag == 'object':
@@ -109,23 +144,34 @@ class JsonConverter(Converter):
             elif token == ':':
                 expect_key = False
 
-            elif token.startswith('"'):
-                value = token.strip('"')
+            elif token.startswith('"') and token.endswith('"'):
+                value = token[1:-1]
                 if expect_key:
                     current_key = value
                     expect_key = False
                 else:
-                    node = self.ast.add('string', text=value, parent=stack[-1])
-                    if current_key:
+                    node = self.ast.add(
+                        'string', text=value, parent=stack[-1]
+                    )
+                    if current_key is not None:
                         node.attributes['key'] = current_key
                         current_key = None
 
-            elif token in ('true', 'false', 'null') or re.match(r'-?\d+(\.\d+)?', token):
-                node = self.ast.add('literal', text=token, parent=stack[-1])
-                if current_key:
+            elif token in ('true', 'false', 'null') or \
+                    self.NUMERIC_PATTERN.fullmatch(token):
+                node = self.ast.add(
+                    'literal', text=token, parent=stack[-1]
+                )
+                if current_key is not None:
                     node.attributes['key'] = current_key
                     current_key = None
+                expect_key = False
+
         return self.ast
 
     def _unbuild(self, expressions: List[str]) -> str:
-        return ' '.join(expressions)
+        """
+        Convert a list of tokens back into a compact JSON string without
+        unnecessary whitespace.
+        """
+        return ''.join(expressions)
