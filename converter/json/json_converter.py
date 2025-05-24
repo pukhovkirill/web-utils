@@ -21,10 +21,7 @@ class JsonConverter(Converter):
         task = tuple
 
         q: deque[task] = deque()
-
-        # кладём корневых детей в обратном порядке, чтобы первый оказался последним в стеке
-        for child in reversed(tree.root.children):
-            q.append(("enter", child, None))
+        q.append(("enter", tree.root.children[0], None))
 
         while q:
             action, node, extra = q.pop()
@@ -43,6 +40,10 @@ class JsonConverter(Converter):
             if key:
                 tokens.append(f'"{key}"')
                 tokens.append(':')
+
+            if tag == 'objects':
+                for child in reversed(node.children):
+                    q.append(("enter", child, None))
 
             if tag == 'object':
                 tokens.append('{')
@@ -69,8 +70,10 @@ class JsonConverter(Converter):
         return tokens
 
     def _build(self, expressions: List[str]) -> AST:
+        # preamble
         self.ast = AST()
-        stack = [self.ast.root]
+        self.ast.add('objects', text='ast_array')
+        stack = [self.ast.root.children[-1]]
         current_key = None
         expect_key = False
 
