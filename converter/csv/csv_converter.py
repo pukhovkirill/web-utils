@@ -1,67 +1,37 @@
-from collections import deque
-from converter.ast import AST
-from converter.converter import Converter
-from typing import List
+import csv
+from converter.abc_converter import Converter
+from converter.ast import Node
 
 
 class CsvConverter(Converter):
-    def _strip_text(self, string: str) -> List[List[str]]:
-        lines = string.strip().splitlines()
-        return [line.strip().split(',') for line in lines]
+    """Converter for CSV format using the built-in csv module."""
 
-    def _build(self, expressions: List[List[str]]) -> AST:
-        self.ast = AST()
-        ast_array = self.ast.add('objects', text='ast_array', parent=self.ast.root)
-        header = expressions[0]
+    def _load(self, fp) -> Node:
+        """
+        Load CSV from the given text stream and convert it to AST.
 
-        for row in expressions[1:]:
-            obj_node = self.ast.add('object', parent=ast_array)
-            for key, value in zip(header, row):
-                value = value.strip()
-                if ';' in value:
-                    arr_node = self.ast.add('array', parent=obj_node, attributes={'key': key})
-                    for item in value.split(';'):
-                        tag = 'literal' if item.replace('.', '', 1).isdigit() else 'string'
-                        self.ast.add(tag, text=item.strip(), parent=arr_node)
-                else:
-                    tag = 'literal' if value.replace('.', '', 1).isdigit() else 'string'
-                    self.ast.add(tag, text=value, parent=obj_node, attributes={'key': key})
+        :param fp: A text stream to read CSV from.
+        :return: Root of the constructed AST.
+        """
+        reader = csv.DictReader(fp)
+        rows = list(reader)
+        # Represent CSV as a list of objects
+        return Node.from_native(rows)
 
-        return self.ast
+    def _dump(self, node: Node, fp) -> None:
+        """
+        Serialize the AST node to CSV and write it to the text stream.
 
-    def _strip_ast(self, tree: AST) -> List[List[str]]:
-        rows = []
-        header = []
+        :param node: The root AST node to serialize.
+        :param fp: A text stream to write CSV to.
+        :raises ValueError: If the native object is not a non-empty list
+                            of dictionaries.
+        """
+        native = node.to_native()
+        if not isinstance(native, list) or not native:
+            raise ValueError("For CSV, a non-empty list of dicts is expected")
 
-        task = tuple
-
-        q: deque[task] = deque()
-        q.append(("objects", tree.root.children[0]))
-
-        while q:
-            tag, node = q.pop()
-
-            if node.tag == 'objects':
-                for child in node.children:
-                    q.append((child.tag, child))
-
-            elif tag == 'object':
-                row_dict = {}
-                for child in node.children:
-                    key = child.attributes.get('key')
-                    if child.tag == 'array':
-                        val = ';'.join(grandchild.text for grandchild in child.children)
-                    else:
-                        val = child.text or ''
-                    row_dict[key] = val
-                    if key and key not in header:
-                        header.append(key)
-                rows.append([row_dict.get(k, '') for k in header])
-
-            else:
-                pass
-
-        return [header] + rows
-
-    def _unbuild(self, expressions: List[List[str]]) -> str:
-        return '\n'.join([','.join(row) for row in expressions])
+        fieldnames = list(native[0].keys())
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(native)
