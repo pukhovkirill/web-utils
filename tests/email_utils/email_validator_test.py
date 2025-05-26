@@ -1,4 +1,5 @@
 import pytest
+
 from email_utils import EmailValidator
 
 
@@ -45,13 +46,13 @@ def test_validate_strict_valid(email_utils):
     "plainaddress",
     "noatsign.com",
     "@nouser.com",
-    "user@.com",            # домен начинается с точки
-    "user@domain",          # нет TLD
-    "user@domain.c",        # TLD менее 2 символов
-    ".user@example.com",    # local part начинается с точки
-    "user.@example.com",    # local part заканчивается на точку
-    "user@-example.com",    # домен начинается с дефиса
-    "user@example..com",    # двойная точка в домене
+    "user@.com",  # domain starts with dot
+    "user@domain",  # no TLD
+    "user@domain.c",  # TLD less than 2 characters
+    ".user@example.com",  # local part starts with a dot
+    "user.@example.com",  # local part ends with a dot
+    "user@-example.com",  # the domain starts with a hyphen
+    "user@example..com",  # double dot in domain
 ])
 def test_validate_strict_invalid(email_utils):
     """Strict validation should reject addresses violating any regex rule."""
@@ -60,7 +61,7 @@ def test_validate_strict_invalid(email_utils):
 
 
 def test_strict_implies_loose():
-    """Любой email_utils, прошедший строгую проверку, должен пройти и мягкую."""
+    """Any email that passes the hard test should pass the soft test."""
     samples = [
         "user@example.com",
         "user.name+tag+sorting@example.co.uk",

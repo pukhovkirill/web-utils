@@ -1,7 +1,9 @@
-import pytest
-import smtplib
 import imaplib
+import smtplib
 from email.message import EmailMessage
+
+import pytest
+
 from email_utils import SimpleMailer
 
 
@@ -9,6 +11,7 @@ class DummySMTP:
     """
     Dummy SMTP server to intercept starttls(), login(), and send_message().
     """
+
     def __init__(self, host, port):
         self.host = host
         self.port = port
@@ -42,6 +45,7 @@ class DummyIMAP:
     Dummy IMAP SSL server for testing fetch_latest_emails().
     You can set the attributes search_response and fetch_batches for different scenarios.
     """
+
     def __init__(self, host):
         self.host = host
         self.logged_in = False

@@ -1,5 +1,6 @@
 import socket
 import time
+
 import pytest
 
 from network.dns import DnsLookup, DnsResponse
@@ -41,6 +42,7 @@ def test_successful_lookup(monkeypatch):
 
 def test_lookup_error(monkeypatch):
     """If getaddrinfo raises an exception, error is set and addresses remain empty."""
+
     class FakeError(Exception):
         pass
 

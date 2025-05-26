@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 import network.speedtest.speed_test as speedtest
 from network.speedtest import Speedtest
