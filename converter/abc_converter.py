@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from io import StringIO
 from typing import Union, TextIO
+
 from converter.ast import Node
 
 

@@ -1,8 +1,9 @@
 import numpy as np
-from .version_selector import VersionSelector
+from PIL import Image
+
 from .encoder import Encoder
 from .error_correction import ErrorCorrection
-from PIL import Image
+from .version_selector import VersionSelector
 
 
 class QRCodeGenerator:

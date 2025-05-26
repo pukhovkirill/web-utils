@@ -13,16 +13,16 @@ class Encoder:
 
     # Mode indicator bit patterns
     MODE_INDICATORS = {
-        "NUMERIC":      "0001",
+        "NUMERIC": "0001",
         "ALPHANUMERIC": "0010",
-        "BYTE":         "0100",
-        "KANJI":        "1000"
+        "BYTE": "0100",
+        "KANJI": "1000"
     }
 
     # Alphanumeric character values for pairs encoding
     ALPHANUMERIC_VALUES = {
         **{str(i): i for i in range(10)},
-        **{chr(ord('A')+i): 10+i for i in range(26)},
+        **{chr(ord('A') + i): 10 + i for i in range(26)},
         " ": 36, "$": 37, "%": 38, "*": 39,
         "+": 40, "-": 41, ".": 42, "/": 43, ":": 44
     }
@@ -73,10 +73,10 @@ class Encoder:
 
     # Character count indicator lengths by (max version, bit length)
     CHAR_COUNT_BITS = {
-        "NUMERIC":      [(9, 10), (26, 12), (40, 14)],
-        "ALPHANUMERIC": [(9, 9),  (26, 11), (40, 13)],
-        "BYTE":         [(9, 8),  (40, 16)],
-        "KANJI":        [(9, 8),  (26, 10), (40, 12)]
+        "NUMERIC": [(9, 10), (26, 12), (40, 14)],
+        "ALPHANUMERIC": [(9, 9), (26, 11), (40, 13)],
+        "BYTE": [(9, 8), (40, 16)],
+        "KANJI": [(9, 8), (26, 10), (40, 12)]
     }
 
     def __init__(self):
@@ -145,7 +145,7 @@ class Encoder:
         if len(encoded) % 2 != 0:
             return False
         for i in range(0, len(encoded), 2):
-            hb, lb = encoded[i], encoded[i+1]
+            hb, lb = encoded[i], encoded[i + 1]
             if not ((0x81 <= hb <= 0x9F or 0xE0 <= hb <= 0xFC) and
                     (0x40 <= lb <= 0x7E or 0x80 <= lb <= 0xFC)):
                 return False
@@ -213,14 +213,14 @@ class Encoder:
         Encode numeric text in groups of up to 3 digits.
         Returns concatenated binary strings (no zero-fill).
         """
-        parts = [text[i:i+3] for i in range(0, len(text), 3)]
+        parts = [text[i:i + 3] for i in range(0, len(text), 3)]
         return ''.join(bin(int(p))[2:] for p in parts)
 
     def alphanumeric_encoding(self, text):
         """
         Encode alphanumeric text in pairs. Two chars → 11 bits, one char → 6 bits.
         """
-        pairs = [text[i:i+2] for i in range(0, len(text), 2)]
+        pairs = [text[i:i + 2] for i in range(0, len(text), 2)]
         result = ""
         for grp in pairs:
             if len(grp) == 2:
@@ -248,7 +248,7 @@ class Encoder:
         data = text.encode('shift_jis')
         result = ""
         for i in range(0, len(data), 2):
-            word = (data[i] << 8) | data[i+1]
+            word = (data[i] << 8) | data[i + 1]
             if 0x8140 <= word <= 0x9FFC:
                 offset = word - 0x8140
             else:

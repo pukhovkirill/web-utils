@@ -1,6 +1,7 @@
+from bitarray import bitarray
+
 from .encoder import Encoder
 from .version_selector import VersionSelector
-from bitarray import bitarray
 
 
 class ErrorCorrection:
@@ -95,7 +96,7 @@ class ErrorCorrection:
         bit_string = self.encoder.encode(text)
         coefficients = []
         for i in range(0, len(bit_string), 8):
-            byte = bit_string[i:i+8]
+            byte = bit_string[i:i + 8]
             coefficients.append(int(byte, 2))
         return coefficients
 

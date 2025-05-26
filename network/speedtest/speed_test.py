@@ -1,6 +1,6 @@
-import urllib.request
 import http.client
 import time
+import urllib.request
 from typing import ClassVar, List, Tuple
 
 
@@ -18,8 +18,8 @@ class Speedtest:
     ]
 
     def __init__(
-        self,
-        user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            self,
+            user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     ) -> None:
         """Initialize speedtest parameters.
 
@@ -69,11 +69,11 @@ class Speedtest:
         return total_bytes * 8 / elapsed
 
     def test_upload(
-        self,
-        host: str,
-        path: str,
-        duration: float = 10.0,
-        chunk_size: int = 1024 * 1024
+            self,
+            host: str,
+            path: str,
+            duration: float = 10.0,
+            chunk_size: int = 1024 * 1024
     ) -> float:
         """
         Measure upload speed by sending POST requests with fixed-size payloads.

@@ -116,7 +116,7 @@ class Traceroute(IcmpProto):
 
             for ttl in range(1, max_hops + 1):
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP) as send_sock, \
-                     socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP) as recv_sock:
+                        socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP) as recv_sock:
 
                     recv_sock.settimeout(self._timeout)
                     recv_sock.bind(('', base_port))

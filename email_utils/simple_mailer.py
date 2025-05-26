@@ -1,6 +1,6 @@
-import smtplib
-import imaplib
 import email
+import imaplib
+import smtplib
 from email.message import EmailMessage
 from typing import List, Optional
 
@@ -11,12 +11,12 @@ class SimpleMailer:
     """
 
     def __init__(
-        self,
-        smtp_server: str,
-        smtp_port: int,
-        imap_server: str,
-        email_address: str,
-        password: str,
+            self,
+            smtp_server: str,
+            smtp_port: int,
+            imap_server: str,
+            email_address: str,
+            password: str,
     ) -> None:
         """
         Initialize SMTP and IMAP connection parameters.
@@ -112,9 +112,9 @@ class SimpleMailer:
 
                 first_part = msg_data[0]
                 if (
-                    not isinstance(first_part, tuple)
-                    or len(first_part) < 2
-                    or not isinstance(first_part[1], (bytes, bytearray))
+                        not isinstance(first_part, tuple)
+                        or len(first_part) < 2
+                        or not isinstance(first_part[1], (bytes, bytearray))
                 ):
                     continue
 

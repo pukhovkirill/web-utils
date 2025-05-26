@@ -1,6 +1,7 @@
-import numpy as np
 from typing import List, Union
+
 import cv2
+import numpy as np
 
 
 class QRCodeReader:
