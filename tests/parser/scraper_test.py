@@ -1,14 +1,11 @@
-"""
-Test suite for parser.scraper.WebScraper.
-"""
-
-import pytest
-from requests.exceptions import HTTPError
-from bs4 import BeautifulSoup
 from unittest.mock import MagicMock
 
-from parser.scraper import WebScraper
+import pytest
+from bs4 import BeautifulSoup
+from requests.exceptions import HTTPError
+
 from parser.save_strategies import Writer
+from parser.scraper import WebScraper
 
 
 class DummyWriter(Writer):
