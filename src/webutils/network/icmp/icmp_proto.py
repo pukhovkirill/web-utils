@@ -1,7 +1,7 @@
 import os
 import struct
 
-from . import icmp_utils as utils
+from webutils.network.icmp import icmp_utils as utils
 
 
 class IcmpProto:

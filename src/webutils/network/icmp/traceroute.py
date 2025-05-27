@@ -2,8 +2,8 @@ import socket
 import struct
 import time
 
-from . import icmp_utils as utils
-from .icmp_proto import IcmpProto
+from webutils.network.icmp import icmp_utils as utils
+from webutils.network.icmp.icmp_proto import IcmpProto
 
 
 class TracerouteHopBuilder:

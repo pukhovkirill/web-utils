@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "web-utils"
+version = "1.0.0"
+description = "Utilities for working on the network"
+authors = ["Pukhov Kirill"]
+readme = "README.md"
+
+packages = [
+  { include = "webutils", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+
+bitarray       = "3.3.1"
+dnspython      = "2.7.0"
+idna           = "3.10"
+iniconfig      = "2.1.0"
+numpy          = "2.2.5"
+opencv-python  = "4.11.0.86"
+packaging      = "24.2"
+pillow         = "11.2.1"
+xmltodict      = "~0.14.2"
+PyYAML         = "~6.0.2"
+requests       = "~2.32.3"
+beautifulsoup4 = "~4.13.4"
+
+[tool.poetry.dev-dependencies]
+pytest        = "8.3.5"
+pytest-socket = "0.7.0"
+
+[build-system]
+requires    = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

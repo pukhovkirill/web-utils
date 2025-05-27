@@ -3,8 +3,8 @@ from io import StringIO
 
 import pytest
 
-from converter.ast import Node
-from converter.json import JsonConverter
+from webutils.converter.ast import Node
+from webutils.converter.json import JsonConverter
 
 
 @pytest.fixture

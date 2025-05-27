@@ -3,8 +3,8 @@ from io import StringIO
 import pytest
 import yaml
 
-from converter.ast import Node
-from converter.yaml import YamlConverter
+from webutils.converter.ast import Node
+from webutils.converter.yaml import YamlConverter
 
 
 @pytest.fixture

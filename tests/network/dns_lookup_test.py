@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from network.dns import DnsLookup, DnsResponse
+from webutils.network.dns import DnsLookup, DnsResponse
 
 
 def test_dns_response_init():

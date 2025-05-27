@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from network.icmp import Ping, PingResponse
+from webutils.network.icmp import Ping, PingResponse
 
 
 def mock_to_ip():
@@ -28,8 +28,8 @@ def mock_socket():
 @pytest.fixture
 def ping_instance():
     """Create a Ping instance with patched utilities for consistent behavior."""
-    with patch("network.icmp.icmp_utils.to_ip", side_effect=mock_to_ip), \
-            patch("network.icmp.icmp_utils.calculate_checksum", side_effect=mock_calculate_checksum):
+    with patch("webutils.network.icmp.icmp_utils.to_ip", side_effect=mock_to_ip), \
+            patch("webutils.network.icmp.icmp_utils.calculate_checksum", side_effect=mock_calculate_checksum):
         return Ping(destination="8.8.8.8", packet_size=64, timeout=1)
 
 

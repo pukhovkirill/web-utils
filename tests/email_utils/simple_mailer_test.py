@@ -4,7 +4,7 @@ from email.message import EmailMessage
 
 import pytest
 
-from email_utils import SimpleMailer
+from webutils.email_utils import SimpleMailer
 
 
 class DummySMTP:

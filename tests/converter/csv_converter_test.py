@@ -3,8 +3,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from converter.ast import Node, ArrayNode
-from converter.csv import CsvConverter
+from webutils.converter.ast import Node, ArrayNode
+from webutils.converter.csv import CsvConverter
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 import socket
 
-import network.icmp.icmp_utils as utils
-from network.icmp import Traceroute, TracerouteHop, TracerouteResponse
+import webutils.network.icmp.icmp_utils as utils
+from webutils.network.icmp import Traceroute, TracerouteHop, TracerouteResponse
 
 
 class DummySocket:

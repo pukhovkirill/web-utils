@@ -4,8 +4,8 @@ import pytest
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
 
-from parser.save_strategies import Writer
-from parser.scraper import WebScraper
+from webutils.parser.save_strategies import Writer
+from webutils.parser.scraper import WebScraper
 
 
 class DummyWriter(Writer):
@@ -50,7 +50,7 @@ def test_fetch_sets_soup(monkeypatch):
     )
     mock_response.raise_for_status.return_value = None
     monkeypatch.setattr(
-        "parser.scraper.requests.get",
+        "webutils.parser.scraper.requests.get",
         lambda url: mock_response
     )
 
@@ -68,7 +68,7 @@ def test_fetch_raises_http_error(monkeypatch):
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = HTTPError
     monkeypatch.setattr(
-        "parser.scraper.requests.get",
+        "webutils.parser.scraper.requests.get",
         lambda url: mock_response
     )
 
@@ -107,7 +107,7 @@ def test_parse_extracts_data(monkeypatch):
     mock_response.text = html
     mock_response.raise_for_status.return_value = None
     monkeypatch.setattr(
-        "parser.scraper.requests.get",
+        "webutils.parser.scraper.requests.get",
         lambda url: mock_response
     )
 

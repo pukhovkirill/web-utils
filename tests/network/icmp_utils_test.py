@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from network.icmp import icmp_utils as utils
+from webutils.network.icmp import icmp_utils as utils
 
 
 def test_to_ip():

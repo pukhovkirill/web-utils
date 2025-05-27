@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pytest
 
-from qr import QRCodeGenerator
+from webutils.qr import QRCodeGenerator
 
 
 @pytest.fixture

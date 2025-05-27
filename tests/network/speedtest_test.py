@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import network.speedtest.speed_test as speedtest
-from network.speedtest import Speedtest
+import webutils.network.speedtest.speed_test as speedtest
+from webutils.network.speedtest import Speedtest
 
 
 @pytest.mark.parametrize(

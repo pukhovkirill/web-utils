@@ -1,6 +1,6 @@
 import pytest
 
-from email_utils import EmailValidator
+from webutils.email_utils import EmailValidator
 
 
 @pytest.mark.parametrize("email_utils", [

@@ -1,7 +1,7 @@
 import xmltodict
 
-from converter.abc_converter import Converter
-from converter.ast import Node
+from webutils.converter.abc_converter import Converter
+from webutils.converter.ast import Node
 
 
 class XmlConverter(Converter):

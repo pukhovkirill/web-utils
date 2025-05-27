@@ -3,8 +3,8 @@ from io import StringIO
 import pytest
 import xmltodict
 
-from converter.ast import Node
-from converter.xml import XmlConverter
+from webutils.converter.ast import Node
+from webutils.converter.xml import XmlConverter
 
 
 @pytest.fixture

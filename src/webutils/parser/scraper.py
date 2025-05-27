@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 import requests
 from bs4 import BeautifulSoup
 
-from parser.save_strategies import Writer
+from webutils.parser.save_strategies import Writer
 
 
 class WebScraper:
