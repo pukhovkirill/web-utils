@@ -2,8 +2,6 @@
 
 **Utilities for working on the network.**
 
----
-
 ## Table of Contents
 
 * [Features](#features)
@@ -12,7 +10,6 @@
 * [Modules](#modules)
 * [License](#license)
 
----
 
 ## Features
 
@@ -24,11 +21,10 @@
 * **QR codes**: generation and reading
 * **Email utilities**: address validation, sending and receiving mail
 
----
 
 ## Installation
 
-Requires Python ≥3.11
+Requires Python ≥ 3.11
 
 1. **Install from git**
 
@@ -43,7 +39,6 @@ Requires Python ≥3.11
    pip install -e .
    ```
 
----
 
 ## Examples
 
@@ -54,7 +49,6 @@ jupyter notebook docs/examples.ipynb
 ```
 [Open the examples notebook](docs/example.ipynb)
 
----
 
 ## Modules
 
@@ -119,7 +113,6 @@ web-utils
 └── LICENSE
 ```
 
----
 
 ## License
 
