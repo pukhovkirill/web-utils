@@ -51,6 +51,10 @@ class QRCodeGenerator:
             ValueError: If data is not str or bytes.
             IOError: If writing the file fails.
         """
+        if isinstance(scale, str) and output_path is None:
+            output_path = scale
+            scale = 10
+
         if isinstance(data, bytes):
             text = data.decode("utf-8")
         elif isinstance(data, str):
@@ -65,7 +69,7 @@ class QRCodeGenerator:
             height, width = qr.shape[:2]
             qr = cv2.resize(
                 qr,
-                (width * scale, height * scale),
+                dsize=(int(width * scale), int(height * scale)),
                 interpolation=cv2.INTER_NEAREST,
             )
 
