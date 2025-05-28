@@ -117,4 +117,4 @@ web-utils
 ## License
 
 Copyright (c) 2025 Pukhov Kirill \
-Distributed under the MIT License. See the LICENSE file for details.
+Distributed under the MIT License. See the [LICENSE](LICENSE) file for details.
