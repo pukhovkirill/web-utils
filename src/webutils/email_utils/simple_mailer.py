@@ -3,15 +3,14 @@ import email
 import imaplib
 import smtplib
 import socket
+import base64
+from email.header import decode_header, make_header
 from email.message import EmailMessage
 from typing import List, Optional
 
 
 class SimpleMailer:
-    """
-    A simple email client for sending messages via SMTP and fetching messages via IMAP,
-    with input validation and error handling.
-    """
+    """Simple SMTP/IMAP client with optional OAuth2 support."""
 
     EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -21,195 +20,206 @@ class SimpleMailer:
         smtp_port: int,
         imap_server: str,
         email_address: str,
-        password: str,
+        password: Optional[str] = None,
+        oauth2_token: Optional[str] = None,
+        use_ssl: bool = False,
     ) -> None:
         """
-        Initialize SMTP and IMAP connection parameters with validation.
+        Initialize the mailer with SMTP and IMAP server info and authentication.
 
         Args:
-            smtp_server: Hostname of the SMTP server.
-            smtp_port: Port of the SMTP server.
-            imap_server: Hostname of the IMAP server.
-            email_address: Email address to authenticate as.
-            password: Password for the email account.
+            smtp_server: SMTP server hostname.
+            smtp_port: SMTP server port.
+            imap_server: IMAP server hostname.
+            email_address: Email address for authentication.
+            password: Account password for basic auth.
+            oauth2_token: OAuth2 bearer token for XOAUTH2.
+            use_ssl: If True, use SSL-wrapped SMTP; else STARTTLS.
 
         Raises:
-            TypeError: If any parameter is of incorrect type.
-            ValueError: If any parameter is invalid (e.g., empty or malformed email).
+            ValueError: On invalid parameters.
+            TypeError: If use_ssl is not a bool.
         """
-        # Validate types
         if not isinstance(smtp_server, str) or not smtp_server.strip():
-            raise ValueError(f"Invalid SMTP server: '{smtp_server}'")
+            raise ValueError("Invalid SMTP server")
         if not isinstance(smtp_port, int) or smtp_port <= 0:
-            raise ValueError(f"Invalid SMTP port: '{smtp_port}'")
+            raise ValueError("Invalid SMTP port")
         if not isinstance(imap_server, str) or not imap_server.strip():
-            raise ValueError(f"Invalid IMAP server: '{imap_server}'")
+            raise ValueError("Invalid IMAP server")
         if not isinstance(email_address, str) or not self.EMAIL_PATTERN.match(email_address):
-            raise ValueError(f"Invalid email address: '{email_address}'")
-        if not isinstance(password, str) or not password:
-            raise ValueError("Password must be a non-empty string.")
+            raise ValueError("Invalid email address")
+        if (password and oauth2_token) or (not password and not oauth2_token):
+            raise ValueError("Provide exactly one of 'password' or 'oauth2_token'")
+        if password is not None and not password:
+            raise ValueError("Password must be non-empty")
+        if oauth2_token is not None and not oauth2_token:
+            raise ValueError("OAuth2 token must be non-empty")
+        if not isinstance(use_ssl, bool):
+            raise TypeError("use_ssl must be bool")
 
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
         self.imap_server = imap_server
         self.email_address = email_address
         self.password = password
+        self.oauth2_token = oauth2_token
+        self.use_ssl = use_ssl
 
     def _connect_smtp(self) -> smtplib.SMTP:
         """
-        Create and return an authenticated SMTP connection.
+        Establish and authenticate an SMTP connection.
 
         Returns:
-            An authenticated `smtplib.SMTP` instance with TLS enabled.
+            An authenticated smtplib.SMTP instance.
 
         Raises:
-            ConnectionError: If unable to resolve host, connect, or authenticate.
+            ConnectionError: On connection or authentication failure.
         """
         try:
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=10)
-            server.starttls()
-            server.login(self.email_address, self.password)
+            if self.use_ssl:
+                server = smtplib.SMTP_SSL(self.smtp_server, self.smtp_port)
+                server.ehlo()
+            else:
+                server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+
+            if self.oauth2_token:
+                auth_str = f"user={self.email_address}\x01auth=Bearer {self.oauth2_token}\x01\x01"
+                auth_b64 = base64.b64encode(auth_str.encode()).decode('ascii')
+                code, resp = server.docmd('AUTH', 'XOAUTH2 ' + auth_b64)
+                if code != 235:
+                    raise ConnectionError(f"SMTP OAuth2 auth failed: {code} {resp}")
+            else:
+                server.login(self.email_address, self.password)
             return server
-        except socket.gaierror as e:
-            raise ConnectionError(f"SMTP server address resolution failed: {e}")
-        except smtplib.SMTPAuthenticationError as e:
-            raise ConnectionError(f"SMTP authentication failed: {e}")
-        except (smtplib.SMTPException, OSError) as e:
-            raise ConnectionError(f"SMTP connection failed: {e}")
+        except (socket.gaierror, smtplib.SMTPException, OSError) as e:
+            raise ConnectionError(f"SMTP connection/auth failed: {e}")
 
     def _connect_imap(self) -> imaplib.IMAP4_SSL:
         """
-        Create and return an authenticated IMAP SSL connection.
+        Establish and authenticate an IMAP SSL connection.
 
         Returns:
-            An authenticated `imaplib.IMAP4_SSL` instance.
+            An authenticated IMAP4_SSL instance.
 
         Raises:
-            ConnectionError: If unable to resolve host, connect, or authenticate.
+            ConnectionError: On connection or authentication failure.
         """
         try:
             mail = imaplib.IMAP4_SSL(self.imap_server)
-            mail.login(self.email_address, self.password)
+            if self.oauth2_token:
+                auth_str = f"user={self.email_address}\x01auth=Bearer {self.oauth2_token}\x01\x01"
+                mail.authenticate('XOAUTH2', lambda _: auth_str.encode())
+            else:
+                mail.login(self.email_address, self.password)
             return mail
-        except socket.gaierror as e:
-            raise ConnectionError(f"IMAP server address resolution failed: {e}")
-        except imaplib.IMAP4.error as e:
-            raise ConnectionError(f"IMAP authentication failed: {e}")
-        except OSError as e:
-            raise ConnectionError(f"IMAP connection failed: {e}")
+        except (socket.gaierror, imaplib.IMAP4.error, OSError) as e:
+            raise ConnectionError(f"IMAP connection/auth failed: {e}")
 
     def send_email(self, to_address: str, subject: str, body: str) -> None:
         """
-        Send an email after validating inputs.
+        Send a plain-text email.
 
         Args:
             to_address: Recipient email address.
-            subject: Email subject line.
-            body: Plain-text body of the email.
+            subject: Subject line.
+            body: Text body of the email.
 
         Raises:
-            ValueError: If inputs are invalid.
-            RuntimeError: If sending fails.
+            ValueError: On invalid recipient address.
+            RuntimeError: On send failure.
         """
-        # Validate inputs
-        if not isinstance(to_address, str) or not self.EMAIL_PATTERN.match(to_address):
-            raise ValueError(f"Invalid recipient address: '{to_address}'")
-        if not isinstance(subject, str):
-            raise TypeError("Subject must be a string.")
-        if not isinstance(body, str):
-            raise TypeError("Body must be a string.")
-
+        if not self.EMAIL_PATTERN.match(to_address):
+            raise ValueError("Invalid recipient address")
         msg = EmailMessage()
-        msg["From"] = self.email_address
-        msg["To"] = to_address
-        msg["Subject"] = subject
+        msg['From'] = self.email_address
+        msg['To'] = to_address
+        msg['Subject'] = subject
         msg.set_content(body)
-
         try:
             with self._connect_smtp() as server:
                 server.send_message(msg)
         except ConnectionError as e:
-            # Preserve specific connection errors
             raise RuntimeError(f"Failed to send email: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Unexpected error when sending email: {e}")
 
-    def fetch_latest_emails(self, mailbox: str = "INBOX", limit: int = 5) -> List[str]:
+    def _decode_header(self, raw: str) -> str:
         """
-        Fetch the latest emails from a mailbox after validating inputs.
+        Decode an RFC 2047 encoded header into a Unicode string.
 
         Args:
-            mailbox: Name of the mailbox (default is "INBOX").
-            limit: Maximum number of messages to retrieve.
+            raw: The raw header value.
 
         Returns:
-            A list of formatted email strings.
+            Decoded Unicode string.
+        """
+        try:
+            return str(make_header(decode_header(raw)))
+        except Exception:
+            return raw
+
+    def fetch_latest_emails(self, mailbox: str = 'INBOX', limit: int = 10) -> List[str]:
+        """
+        Fetch the latest messages from a mailbox.
+
+        Args:
+            mailbox: Mailbox name (e.g., 'INBOX').
+            limit: Number of emails to retrieve.
+
+        Returns:
+            A list of formatted strings: "From: ...\nSubject: ...\n\n<body>".
 
         Raises:
-            ValueError: If inputs are invalid.
-            RuntimeError: If fetching fails.
+            ValueError: On invalid arguments.
+            RuntimeError: On fetch failure.
         """
-        # Validate inputs
-        if not isinstance(mailbox, str) or not mailbox.strip():
-            raise ValueError(f"Invalid mailbox name: '{mailbox}'")
+        if not isinstance(mailbox, str) or not mailbox:
+            raise ValueError("Mailbox must be a non-empty string")
         if not isinstance(limit, int) or limit <= 0:
-            raise ValueError(f"Limit must be a positive integer, got: {limit}")
-
-        messages: List[str] = []
+            raise ValueError("Limit must be a positive integer")
 
         try:
-            with self._connect_imap() as mail:
-                mail.select(mailbox)
+            mail = self._connect_imap()
+            status, _ = mail.select(mailbox)
+            if status != 'OK':
+                mail.logout()
+                return []
 
-                status, data = mail.search(None, "ALL")
-                if status != "OK" or not data:
-                    return []
+            status, data = mail.search(None, 'ALL')
+            if status != 'OK' or not data:
+                mail.logout()
+                return []
 
-                uids = data[0].split()[-limit:]
+            uids = data[0].split()[-limit:]
+            messages: List[str] = []
+            for uid in reversed(uids):
+                status, msg_data = mail.fetch(uid, '(RFC822)')
+                if status != 'OK' or not msg_data:
+                    continue
 
-                for uid in reversed(uids):
-                    status, msg_data = mail.fetch(uid, "(RFC822)")
-                    if status != "OK" or not msg_data:
-                        continue
+                raw = msg_data[0][1]
+                m = email.message_from_bytes(raw)
+                sender = self._decode_header(m.get('From', ''))
+                subject = self._decode_header(m.get('Subject', ''))
 
-                    first_part = msg_data[0]
-                    if (
-                        not isinstance(first_part, tuple)
-                        or len(first_part) < 2
-                        or not isinstance(first_part[1], (bytes, bytearray))
-                    ):
-                        continue
+                body = ''
+                if m.is_multipart():
+                    for part in m.walk():
+                        if part.get_content_type() == 'text/plain' and not part.is_multipart():
+                            body = part.get_payload(decode=True).decode(
+                                part.get_content_charset() or 'utf-8',
+                                errors='replace'
+                            )
+                            break
+                else:
+                    body = m.get_payload(decode=True).decode(
+                        m.get_content_charset() or 'utf-8',
+                        errors='replace'
+                    )
 
-                    raw_email = first_part[1]
-                    msg = email.message_from_bytes(raw_email)
-
-                    subject = msg.get("Subject", "(No Subject)")
-                    sender = msg.get("From", "(Unknown)")
-                    body: Optional[str] = None
-
-                    if msg.is_multipart():
-                        for part in msg.walk():
-                            if (
-                                part.get_content_type() == "text/plain"
-                                and not part.get("Content-Disposition")
-                            ):
-                                charset = part.get_content_charset() or "utf-8"
-                                body = part.get_payload(decode=True).decode(
-                                    charset, errors="replace"
-                                )
-                                break
-                    else:
-                        charset = msg.get_content_charset() or "utf-8"
-                        body = msg.get_payload(decode=True).decode(
-                            charset, errors="replace"
-                        )
-
-                    body_text = body.strip() if body else ""
-                    formatted = f"From: {sender}\nSubject: {subject}\n\n{body_text}"
-                    messages.append(formatted)
+                messages.append(f"From: {sender}\nSubject: {subject}\n\n{body.strip()}")
+            mail.logout()
+            return messages
         except ConnectionError as e:
             raise RuntimeError(f"Failed to fetch emails: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Unexpected error when fetching emails: {e}")
-
-        return messages

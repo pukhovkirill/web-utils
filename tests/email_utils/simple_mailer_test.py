@@ -9,7 +9,7 @@ from webutils.email_utils import SimpleMailer
 
 class DummySMTP:
     """
-    Dummy SMTP server to intercept starttls(), login(), and send_message().
+    Dummy SMTP server to intercept ehlo(), starttls(), login(), and send_message().
     """
 
     def __init__(self, host, port):
@@ -19,18 +19,24 @@ class DummySMTP:
         self.logged_in = False
         self.sent_messages = []
 
+    def ehlo(self):
+        # No-op for SMTP handshake
+        pass
+
     def starttls(self):
+        # Mark that TLS was started
         self.tls_started = True
 
     def login(self, user, password):
-        # simply accept any credentials
+        # Simulate successful login
         self.logged_in = True
 
     def send_message(self, msg: EmailMessage):
-        # save the sent message for verification
+        # Capture sent message for assertions
         self.sent_messages.append(msg)
 
     def quit(self):
+        # No-op for cleanup
         pass
 
     def __enter__(self):
@@ -106,16 +112,12 @@ def test_send_email_fields_and_flow():
         password="secret",
     )
 
-    # send an email
+    # send an email using the mailer
     mailer.send_email("friend@example.com", "Hello", "This is body")
 
-    # check that DummySMTP received the calls
-    smtp: DummySMTP = smtplib.SMTP("ignore", 0)
-    # but the real object inside send_email is a new instance,
-    # so let's capture it from the patch:
-    # monkeypatch stores the class, but we need to get the object
-    # that is inside the context manager. For simplicity, we assert class behavior:
+    # Manually simulate DummySMTP usage to assert behavior
     smtp = DummySMTP("smtp.example.com", 587)
+    smtp.ehlo()
     smtp.starttls()
     smtp.login("user@example.com", "secret")
     msg = EmailMessage()
@@ -127,7 +129,7 @@ def test_send_email_fields_and_flow():
 
     assert smtp.tls_started, "TLS should be started"
     assert smtp.logged_in, "Should be logged in"
-    assert len(smtp.sent_messages) == 1
+    assert len(smtp.sent_messages) == 1, "One message should be sent"
     sent = smtp.sent_messages[0]
     assert sent["From"] == "user@example.com"
     assert sent["To"] == "friend@example.com"
@@ -166,7 +168,10 @@ def test_fetch_latest_plain_and_error_handling(monkeypatch):
     dummy_imap = DummyIMAP("imap.example.com")
     dummy_imap.fetch_batches = {
         b"1": ("NO", []),
-        b"2": ("OK", [(None, make_email_message("alice@example.com", "SubJ", "Body text"))]),
+        b"2": (
+            "OK",
+            [(None, make_email_message("alice@example.com", "SubJ", "Body text"))],
+        ),
         b"3": ("OK", None),
     }
 
@@ -197,9 +202,7 @@ def test_fetch_latest_multipart_prefers_plain_part(monkeypatch):
         multipart=True,
     )
     dummy_imap = DummyIMAP("imap.example.com")
-    dummy_imap.fetch_batches = {
-        b"1": ("OK", [(None, raw)]),
-    }
+    dummy_imap.fetch_batches = {b"1": ("OK", [(None, raw)])}
     dummy_imap.search_response = ("OK", [b"1"])
 
     monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda host: dummy_imap)
